@@ -1,20 +1,28 @@
 Here’s the list of **required tools** that need to be installed and configured to run the **Recon Scanner Tool**:
 
-### 1. **Subfinder**
+### 1. **Amass**
+   - **Purpose**: Used for passive subdomain enumeration.
+   - **Installation**:
+     ```bash
+    sudo apt update
+    sudo apt install amass
+     ```
+     
+### 2. **Subfinder**
    - **Purpose**: Used for passive subdomain enumeration.
    - **Installation**:
      ```bash
      go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
      ```
 
-### 2. **Assetfinder**
+### 3. **Assetfinder**
    - **Purpose**: Another tool for discovering subdomains.
    - **Installation**:
      ```bash
      go install github.com/assetfinder/assetfinder@latest
      ```
 
-### 3. **Dirsearch**
+### 4. **Dirsearch**
    - **Purpose**: Used for brute-forcing directories on a target domain or IP.
    - **Installation**:
      ```bash
@@ -22,7 +30,7 @@ Here’s the list of **required tools** that need to be installed and configured
      cd dirsearch
      ```
 
-### 4. **Python 3.x**
+### 5. **Python 3.x**
    - **Purpose**: Required to run the recon script.
    - **Installation**:
      - Install Python 3 if it's not installed already.
@@ -31,7 +39,7 @@ Here’s the list of **required tools** that need to be installed and configured
        python3 --version
        ```
 
-### 5. **Python Libraries**:
+### 6. **Python Libraries**:
    - **Requests** (for HTTP requests).
    - **Argparse** (for parsing command-line arguments).
    - **Installation**:
@@ -46,6 +54,7 @@ Here’s the list of **required tools** that need to be installed and configured
    pip install requests argparse
    ```
 3. **Install external tools**:
+   - Subfinder: `sudo apt install amass`
    - Subfinder: `go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest`
    - Assetfinder: `go install github.com/assetfinder/assetfinder@latest`
    - Dirsearch: `git clone https://github.com/maurosoria/dirsearch.git`

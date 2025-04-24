@@ -9,13 +9,12 @@ import datetime
 from queue import Queue
 
 # === CONFIG ===
-DEFAULT_DIRSEARCH_WORDLIST_FOLDER = "/path/to/wordlist/folder"  # Path to folder containing wordlist files
+DEFAULT_DIRSEARCH_WORDLIST_FOLDER = "/path/to/wordlist/folder"
 DEFAULT_DIR_PATHS = ["admin", "login", "config", "dashboard", "logs", ".env", "backup"]
 MAX_THREADS = 50
 
 console_lock = threading.Lock()
 
-# === UTIL ===
 def status(msg, symbol='+'):
     with console_lock:
         print(f"[{symbol}] {msg}")
@@ -25,7 +24,6 @@ def save_results_json(results, filename=None):
     if not filename:
         filename = f"scan_report_{timestamp}.json"
 
-    # Sort 200 responses to top in directory scan results
     for k, v in results.get("directory_scan", {}).items():
         for scan_type in ["dirsearch_hits", "custom_paths_hits"]:
             if scan_type in v:
@@ -34,18 +32,15 @@ def save_results_json(results, filename=None):
 
     with open(filename, "w") as f:
         json.dump(results, f, indent=4)
-    status(f"Results saved to {filename}", symbol='✓')
+    status(f"Results saved to {filename}", symbol='\u2713')
 
-# === SUBDOMAIN ENUMERATION ===
 def brute_force_subdomains(domain):
     status(f"[Subdomain Scan] Starting subdomain enumeration for {domain}...")
     subdomains = set()
 
-    # Subdomain tools
     tools = {
         "subfinder": f"subfinder -silent -d {domain}",
-        "assetfinder": f"assetfinder --subs-only {domain}",
-        "amass": f"amass enum -d {domain} -o amass_subdomains.txt"
+        "assetfinder": f"assetfinder --subs-only {domain}"
     }
 
     for name, cmd in tools.items():
@@ -61,7 +56,6 @@ def brute_force_subdomains(domain):
     status(f"[Subdomain Scan] Total unique subdomains found: {len(subdomains)}")
     return list(subdomains)
 
-# === ALIVE CHECK ===
 def is_alive(domain):
     for proto in ["http://", "https://"]:
         try:
@@ -96,7 +90,6 @@ def check_alive(domains):
     q.join()
     return alive
 
-# === PORT SCAN ===
 def scan_ports(host, ports):
     open_ports = []
     def scanner(p):
@@ -118,7 +111,6 @@ def scan_ports(host, ports):
         t.join()
     return open_ports
 
-# === DIR SCAN ===
 def run_dirsearch(url, wordlists):
     status(f"[Dirsearch] Starting directory brute-forcing for {url}...")
     try:
@@ -158,7 +150,6 @@ def get_wordlists_from_folder(folder_path):
                 wordlists.append(os.path.join(folder_path, file_name))
     return wordlists
 
-# === MAIN ===
 def main():
     parser = argparse.ArgumentParser(description="Recon Scanner")
     parser.add_argument("-d", "--domain", required=True)
@@ -168,7 +159,6 @@ def main():
     parser.add_argument("--json", help="Custom output file name")
     args = parser.parse_args()
 
-    # Domain validation using DNS resolution
     try:
         socket.gethostbyname(args.domain)
     except socket.gaierror:
@@ -235,7 +225,7 @@ def main():
     }
 
     save_results_json(scan_summary, args.json)
-    status("Scan completed successfully!", symbol='✓')
+    status("Scan completed successfully!", symbol='\u2713')
 
 if __name__ == "__main__":
     main()

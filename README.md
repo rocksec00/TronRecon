@@ -4,8 +4,8 @@ Here’s the list of **required tools** that need to be installed and configured
    - **Purpose**: Used for passive subdomain enumeration.
    - **Installation**:
      ```bash
-    sudo apt update
-    sudo apt install amass
+     sudo apt update
+     sudo apt install amass
      ```
      
 ### 2. **Subfinder**

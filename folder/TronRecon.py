@@ -9,7 +9,7 @@ import datetime
 from queue import Queue
 
 # === CONFIG ===
-DEFAULT_DIRSEARCH_WORDLIST_FOLDER = "/path/to/wordlist/folder"
+DEFAULT_DIRSEARCH_WORDLIST_FOLDER = "/home/megatron260926/tools/dirsearch/db"
 DEFAULT_DIR_PATHS = ["admin", "login", "config", "dashboard", "logs", ".env", "backup"]
 MAX_THREADS = 50
 
@@ -32,7 +32,7 @@ def save_results_json(results, filename=None):
 
     with open(filename, "w") as f:
         json.dump(results, f, indent=4)
-    status(f"Results saved to {filename}", symbol='\u2713')
+    status(f"Results saved to {filename}", symbol='✓')
 
 def brute_force_subdomains(domain):
     status(f"[Subdomain Scan] Starting subdomain enumeration for {domain}...")
@@ -116,7 +116,7 @@ def run_dirsearch(url, wordlists):
     try:
         output_file = f"dirsearch_result_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         for wordlist in wordlists:
-            cmd = f"python3 /path/to/dirsearch/dirsearch.py -u {url} -w {wordlist} --crawl -t 50 -o {output_file}"
+            cmd = f"python3 /home/megatron260926/tools/dirsearch/dirsearch.py -u {url} -w {wordlist} --crawl -t 50 -o {output_file}"
             subprocess.run(cmd, shell=True)
         hits = []
         if os.path.exists(output_file):
@@ -138,6 +138,20 @@ def run_custom_path_scan(url, paths):
         except:
             continue
     return found
+
+def run_nuclei_scan(targets):
+    status("[Nuclei] Running nuclei scan on all targets...")
+    output_file = f"nuclei_result_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    with open("nuclei_targets.txt", "w") as f:
+        f.write("\n".join(targets))
+    try:
+        cmd = f"nuclei -l nuclei_targets.txt -o {output_file}"
+        subprocess.run(cmd, shell=True)
+        with open(output_file) as f:
+            return [line.strip() for line in f if line.strip()]
+    except Exception as e:
+        status(f"Error running nuclei: {e}", symbol="!")
+        return []
 
 def get_custom_paths():
     return list(DEFAULT_DIR_PATHS)
@@ -186,6 +200,8 @@ def main():
     custom_paths = get_custom_paths()
     wordlists = get_wordlists_from_folder(DEFAULT_DIRSEARCH_WORDLIST_FOLDER)
 
+    nuclei_targets = list(alive_subs)
+
     for target in alive_subs:
         domain = target.split("//")[-1].split("/")[0]
         try:
@@ -198,7 +214,13 @@ def main():
         open_ports = scan_ports(ip, ports)
         port_results[domain] = open_ports
 
-        status(f"Brute-forcing directories on {target}...")
+        for port in open_ports:
+            nuclei_targets.append(f"http://{ip}:{port}")
+
+    # Run nuclei scan
+    nuclei_results = run_nuclei_scan(nuclei_targets)
+
+    for target in alive_subs:
         dirsearch_hits = run_dirsearch(target, wordlists)
         custom_hits = run_custom_path_scan(target, custom_paths)
         directory_results[target] = {
@@ -206,9 +228,10 @@ def main():
             "custom_paths_hits": custom_hits
         }
 
+    for domain, open_ports in port_results.items():
+        ip = socket.gethostbyname(domain)
         for port in open_ports:
             url = f"http://{ip}:{port}"
-            status(f"Brute-forcing directories on {url}...")
             ds_hits = run_dirsearch(url, wordlists)
             cp_hits = run_custom_path_scan(url, custom_paths)
             directory_results[url] = {
@@ -221,11 +244,13 @@ def main():
         "subdomains": targets,
         "alive_hosts": alive_subs,
         "port_scan": port_results,
+        "nuclei_results": nuclei_results,
         "directory_scan": directory_results
     }
 
     save_results_json(scan_summary, args.json)
-    status("Scan completed successfully!", symbol='\u2713')
+    status("Scan completed successfully!", symbol='✓')
 
 if __name__ == "__main__":
     main()
+    
